@@ -1,0 +1,101 @@
+#!/bin/bash
+
+SCRIPT_DIR=$(readlink -f $(dirname $0))
+BUILD_DIR=$SCRIPT_DIR/build
+PREFIX=_install
+HOST=arm-none-linux-gnueabi
+JOBS=1
+
+export STAGING_DIR=$BUILD_DIR/stage
+mkdir -p $STAGING_DIR
+
+usage()
+{
+    echo "Usage: $0 [-h arm-none-linux] [-p /usr/local/] [-b ./build] [-j 4]" 1>&2
+    exit 1
+}
+
+while getopts ":h:p:b:j:" o; do
+    case "${o}" in
+        h)
+            HOST=$OPTARG
+            ;;
+        p)
+            PREFIX=$OPTARG
+            ;;
+        b)
+            BUILD=$OPTARG
+            ;;
+        j)
+            JOBS=$OPTARG
+            ;;
+        *)
+            usage
+            ;;
+    esac
+done
+shift $((OPTIND-1))
+
+export MAKE=make
+export CC=$HOST-gcc
+export CXX=$HOST-g++
+export CPP=$HOST-cpp
+export AS=$HOST-as
+export LD=$HOST-ld
+export STRIP=$HOST-strip
+
+do_build()
+{
+    echo -e "\033[32m($(date '+%Y-%m-%d %H:%M:%S')): Building $1\033[0m"
+    $*
+    echo -e "\033[32m($(date '+%Y-%m-%d %H:%M:%S')): Finished $1\033[0m"
+}
+
+do_build_with_configure()
+{
+    local name=$1
+    local config_opts=$2
+    local make_opts=$3
+    local build=$BUILD_DIR/$name
+    local finish=$BUILD_DIR/finish-$name
+
+    if [ -e $build ] && [ -e $finish ] && [ `cat $finish` -eq 1 ]; then
+        echo -e "\033[32m($(date '+%Y-%m-%d %H:%M:%S')): Skip $1\033[0m"
+        return
+    fi
+
+    echo -e "\033[32m($(date '+%Y-%m-%d %H:%M:%S')): Building $1\033[0m"
+    mkdir -p $build && pushd $build
+
+    # autogen
+    [ ! -e $SCRIPT_DIR/$name/configure ] &&
+        pushd $SCRIPT_DIR/$name && ./autogen.sh && popd
+
+    # configure
+    $SCRIPT_DIR/$name/configure $config_opts
+
+    # make
+    if [ $? -eq 0 ]; then
+        if [ -z "$make_opts" ]; then
+            $MAKE -j$JOBS && $MAKE install && echo 1 > $finish
+        else
+            $MAKE "$make_opts" -j$JOBS && $MAKE install && echo 1 > $finish
+        fi
+    fi
+
+    popd
+    echo -e "\033[32m($(date '+%Y-%m-%d %H:%M:%S')): Finished $1\033[0m"
+}
+
+git submodule init
+git submodule update
+
+do_build_with_configure binutils-gdb "--prefix=$PREFIX --host=$HOST" \
+    "CFLAGS=-g -O2 -DHAVE_FCNTL_H -DHAVE_LIMITS_H"
+
+do_build_with_configure valgrind "--prefix=$PREFIX --host=${HOST/arm/armv7}"
+
+do_build_with_configure gperftools "--prefix=$PREFIX --host=${HOST}"
+
+cd strace && ./bootstrap && cd -
+do_build_with_configure strace "--prefix=$PREFIX --host=${HOST}"

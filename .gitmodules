@@ -1,0 +1,12 @@
+[submodule "binutils-gdb"]
+	path = binutils-gdb
+	url = git://sourceware.org/git/binutils-gdb.git
+[submodule "valgrind"]
+	path = valgrind
+	url = git://sourceware.org/git/valgrind.git
+[submodule "gperftools"]
+	path = gperftools
+	url = git://github.com/gperftools/gperftools.git
+[submodule "strace"]
+	path = strace
+	url = git://github.com/strace/strace
