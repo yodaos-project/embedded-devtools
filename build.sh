@@ -5,17 +5,18 @@ BUILD_DIR=$SCRIPT_DIR/build
 PREFIX=_install
 HOST=arm-none-linux-gnueabi
 JOBS=1
+STAGE=build
 
 export STAGING_DIR=$BUILD_DIR/stage
 mkdir -p $STAGING_DIR
 
 usage()
 {
-    echo "Usage: $0 [-h arm-none-linux] [-p /usr/local/] [-b ./build] [-j 4]" 1>&2
+    echo "Usage: $0 [-h arm-none-linux] [-p /usr/local/] [-b ./build] [-j 4] [-s build|trim|pack]" 1>&2
     exit 1
 }
 
-while getopts ":h:p:b:j:" o; do
+while getopts ":h:p:b:j:s:" o; do
     case "${o}" in
         h)
             HOST=$OPTARG
@@ -28,6 +29,9 @@ while getopts ":h:p:b:j:" o; do
             ;;
         j)
             JOBS=$OPTARG
+            ;;
+        s)
+            STAGE=$OPTARG
             ;;
         *)
             usage
@@ -87,15 +91,57 @@ do_build_with_configure()
     echo -e "\033[32m($(date '+%Y-%m-%d %H:%M:%S')): Finished $1\033[0m"
 }
 
-git submodule init
-git submodule update
+stage_build()
+{
+    git submodule init
+    git submodule update
 
-do_build_with_configure binutils-gdb "--prefix=$PREFIX --host=$HOST" \
-    "CFLAGS=-g -O2 -DHAVE_FCNTL_H -DHAVE_LIMITS_H"
+    do_build_with_configure binutils-gdb "--prefix=$PREFIX --host=$HOST" \
+        "CFLAGS=-g -O2 -DHAVE_FCNTL_H -DHAVE_LIMITS_H"
 
-do_build_with_configure valgrind "--prefix=$PREFIX --host=${HOST/arm/armv7}"
+    do_build_with_configure valgrind "--prefix=$PREFIX --host=${HOST/arm/armv7}"
 
-do_build_with_configure gperftools "--prefix=$PREFIX --host=${HOST}"
+    do_build_with_configure gperftools "--prefix=$PREFIX --host=${HOST}"
 
-cd strace && ./bootstrap && cd -
-do_build_with_configure strace "--prefix=$PREFIX --host=${HOST}"
+    cd strace && ./bootstrap && cd -
+    do_build_with_configure strace "--prefix=$PREFIX --host=${HOST}"
+}
+
+stage_trim()
+{
+    pushd $PREFIX
+
+    # Delete
+    #rm -rf include lib/pkgconfig share arm-*
+    find lib \( -name '*.a' -or -name '*.la' \) -exec rm -f {} \;
+
+    # Strip
+    find bin -mindepth 1 -type f -exec $STRIP -s {} \; 2>/dev/null
+    find lib -path $PREFIX/lib/valgrind -name '*.so*' -type f -exec $STRIP -s {} \;
+
+    # Valgrind
+    find /tmp/devtools/lib/valgrind/ -perm 0755 ! -name '*memcheck*' ! -name '*core*' -exec rm -f {} \;
+
+    popd
+}
+
+stage_pack()
+{
+    pushd $PREFIX
+    tar -czvf embedded-devtools.tar.gz bin lib
+    popd
+}
+
+if [ "$STAGE" = build ]; then
+    stage_build
+    STAGE=trim
+fi
+
+if [ "$STAGE" = trim ]; then
+    stage_trim
+    STAGE=pack
+fi
+
+if [ "$STAGE" = pack ]; then
+    stage_pack
+fi
