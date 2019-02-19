@@ -105,6 +105,9 @@ stage_build()
 
     cd strace && ./bootstrap && cd -
     do_build_with_configure strace "--prefix=$PREFIX --host=${HOST}"
+
+    cd file && aclocal && autoheader && libtoolize --force && automake --add-missing && autoconf
+    do_build_with_configure file "--prefix=$PREFIX --host=${HOST}"
 }
 
 stage_trim()
