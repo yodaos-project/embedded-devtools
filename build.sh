@@ -47,6 +47,7 @@ export CPP=$HOST-cpp
 export AS=$HOST-as
 export LD=$HOST-ld
 export STRIP=$HOST-strip
+RPATH='-Wl,-rpath,$$\ORIGIN:$$\ORIGIN/../lib'
 
 do_build()
 {
@@ -107,7 +108,7 @@ stage_build()
     do_build_with_configure strace "--prefix=$PREFIX --host=${HOST}"
 
     cd file && aclocal && autoheader && libtoolize --force && automake --add-missing && autoconf
-    do_build_with_configure file "--prefix=$PREFIX --host=${HOST}"
+    do_build_with_configure file "--prefix=$PREFIX --host=${HOST} LDFLAGS=$RPATH"
 }
 
 stage_trim()
@@ -115,7 +116,6 @@ stage_trim()
     pushd $PREFIX
 
     # Delete
-    #rm -rf include lib/pkgconfig share arm-*
     find lib \( -name '*.a' -or -name '*.la' \) -exec rm -f {} \;
 
     # Strip
@@ -131,7 +131,7 @@ stage_trim()
 stage_pack()
 {
     pushd $PREFIX
-    tar -czvf embedded-devtools.tar.gz bin lib
+    tar -czvf embedded-devtools.tar.gz bin lib share/misc/magic.mgc
     popd
 }
 
