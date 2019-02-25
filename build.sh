@@ -102,13 +102,13 @@ stage_build()
 
     do_build_with_configure valgrind "--prefix=$PREFIX --host=${HOST/arm/armv7}"
 
-    do_build_with_configure gperftools "--prefix=$PREFIX --host=${HOST}"
+    do_build_with_configure gperftools "--prefix=$PREFIX --host=${HOST} --enable-libunwind"
 
     cd strace && ./bootstrap && cd -
-    do_build_with_configure strace "--prefix=$PREFIX --host=${HOST}"
+    do_build_with_configure strace "--prefix=$PREFIX --host=${HOST} --enable-mpers=no"
 
     cd file && aclocal && autoheader && libtoolize --force && automake --add-missing && autoconf
-    do_build_with_configure file "--prefix=$PREFIX --host=${HOST} LDFLAGS=$RPATH"
+    do_build_with_configure file "--prefix=$PREFIX --host=${HOST} LDFLAGS=$RPATH --enable-static --disable-shared"
 }
 
 stage_trim()
@@ -131,7 +131,7 @@ stage_trim()
 stage_pack()
 {
     pushd $PREFIX
-    tar -czvf embedded-devtools.tar.gz bin lib share/misc/magic.mgc
+    tar --transform 's#^#embedded-devtools/#' -czvf embedded-devtools.tar.gz bin lib share/misc/magic.mgc
     popd
 }
 
