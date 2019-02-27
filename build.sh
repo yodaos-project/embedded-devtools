@@ -49,6 +49,28 @@ export LD=$HOST-ld
 export STRIP=$HOST-strip
 RPATH='-Wl,-rpath,$$\ORIGIN:$$\ORIGIN/../lib'
 
+check_finished()
+{
+    local finished=$BUILD_DIR/finished-$1
+    local build=$2
+
+    # check build
+    [ $build ] && [ ! -e $build ] && echo 0 && return
+
+    # check finished
+    if [ -e $finished ] && [ `cat $finished` -eq 1 ]; then
+        echo 1
+    else
+        echo 0
+    fi
+}
+
+set_finished()
+{
+    local finished=$BUILD_DIR/finished-$1
+    echo 1 > $finished
+}
+
 do_build()
 {
     echo -e "\033[32m($(date '+%Y-%m-%d %H:%M:%S')): Building $1\033[0m"
@@ -62,9 +84,8 @@ do_build_with_configure()
     local config_opts=$2
     local make_opts=$3
     local build=$BUILD_DIR/$name
-    local finish=$BUILD_DIR/finish-$name
 
-    if [ -e $build ] && [ -e $finish ] && [ `cat $finish` -eq 1 ]; then
+    if [ $(check_finished $name $build) -eq 1 ]; then
         echo -e "\033[32m($(date '+%Y-%m-%d %H:%M:%S')): Skip $1\033[0m"
         return
     fi
@@ -82,9 +103,9 @@ do_build_with_configure()
     # make
     if [ $? -eq 0 ]; then
         if [ -z "$make_opts" ]; then
-            $MAKE -j$JOBS && $MAKE install && echo 1 > $finish
+            $MAKE -j$JOBS && $MAKE install && set_finished $name
         else
-            $MAKE "$make_opts" -j$JOBS && $MAKE install && echo 1 > $finish
+            $MAKE "$make_opts" -j$JOBS && $MAKE install && set_finished $name
         fi
     fi
 
@@ -102,13 +123,17 @@ stage_build()
 
     do_build_with_configure valgrind "--prefix=$PREFIX --host=${HOST/arm/armv7}"
 
-    do_build_with_configure gperftools "--prefix=$PREFIX --host=${HOST} --enable-libunwind"
+    do_build_with_configure gperftools "--prefix=$PREFIX --host=${HOST} \
+        --enable-libunwind"
 
-    cd strace && ./bootstrap && cd -
-    do_build_with_configure strace "--prefix=$PREFIX --host=${HOST} --enable-mpers=no"
+    [ $(check_finished strace) -eq 0 ] && cd strace && ./bootstrap && cd -
+    do_build_with_configure strace "--prefix=$PREFIX --host=${HOST} \
+        --enable-mpers=no"
 
-    cd file && aclocal && autoheader && libtoolize --force && automake --add-missing && autoconf
-    do_build_with_configure file "--prefix=$PREFIX --host=${HOST} LDFLAGS=$RPATH --enable-static --disable-shared"
+    [ $(check_finished file) -eq 0 ] && cd file && aclocal && autoheader && \
+        libtoolize --force && automake --add-missing && autoconf
+    do_build_with_configure file "--prefix=$PREFIX --host=${HOST} \
+        LDFLAGS=$RPATH --enable-static --disable-shared"
 }
 
 stage_trim()
