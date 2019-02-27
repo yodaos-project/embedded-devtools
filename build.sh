@@ -49,28 +49,6 @@ export LD=$HOST-ld
 export STRIP=$HOST-strip
 RPATH='-Wl,-rpath,$$\ORIGIN:$$\ORIGIN/../lib'
 
-check_finished()
-{
-    local finished=$BUILD_DIR/finished-$1
-    local build=$2
-
-    # check build
-    [ $build ] && [ ! -e $build ] && echo 0 && return
-
-    # check finished
-    if [ -e $finished ] && [ `cat $finished` -eq 1 ]; then
-        echo 1
-    else
-        echo 0
-    fi
-}
-
-set_finished()
-{
-    local finished=$BUILD_DIR/finished-$1
-    echo 1 > $finished
-}
-
 do_build()
 {
     echo -e "\033[32m($(date '+%Y-%m-%d %H:%M:%S')): Building $1\033[0m"
@@ -85,32 +63,42 @@ do_build_with_configure()
     local make_opts=$3
     local build=$BUILD_DIR/$name
 
-    if [ $(check_finished $name $build) -eq 1 ]; then
+    if [ -e $build ]; then
+        $MAKE -C $build install
         echo -e "\033[32m($(date '+%Y-%m-%d %H:%M:%S')): Skip $1\033[0m"
         return
     fi
 
-    echo -e "\033[32m($(date '+%Y-%m-%d %H:%M:%S')): Building $1\033[0m"
-    mkdir -p $build && pushd $build
+    echo -e "\033[32m($(date '+%Y-%m-%d %H:%M:%S')): Start building $1\033[0m"
 
-    # autogen
-    [ ! -e $SCRIPT_DIR/$name/configure ] &&
+    # autogen & configure
+    if [ ! -e $SCRIPT_DIR/$name/configure ]; then
         pushd $SCRIPT_DIR/$name && ./autogen.sh && popd
-
-    # configure
-    $SCRIPT_DIR/$name/configure $config_opts
-
-    # make
-    if [ $? -eq 0 ]; then
-        if [ -z "$make_opts" ]; then
-            $MAKE -j$JOBS && $MAKE install && set_finished $name
-        else
-            $MAKE "$make_opts" -j$JOBS && $MAKE install && set_finished $name
-        fi
     fi
 
-    popd
-    echo -e "\033[32m($(date '+%Y-%m-%d %H:%M:%S')): Finished $1\033[0m"
+    mkdir -p $build && pushd $build &&
+        $SCRIPT_DIR/$name/configure $config_opts && popd
+
+    if [ ! $? -eq 0 ]; then
+        rm -rf $build
+        echo -e "\033[32m($(date '+%Y-%m-%d %H:%M:%S')): Failed to configure $1\033[0m"
+        return
+    fi
+
+    # make
+    if [ -z "$make_opts" ]; then
+        $MAKE -C $build -j$JOBS
+    else
+        $MAKE -C $build "$make_opts" -j$JOBS
+    fi
+
+    if [ ! $? -eq 0 ]; then
+        rm -rf $build
+        echo -e "\033[32m($(date '+%Y-%m-%d %H:%M:%S')): Failed to make $1\033[0m"
+    else
+        $MAKE -C $build install
+        echo -e "\033[32m($(date '+%Y-%m-%d %H:%M:%S')): Finished $1\033[0m"
+    fi
 }
 
 stage_build()
@@ -126,11 +114,11 @@ stage_build()
     do_build_with_configure gperftools "--prefix=$PREFIX --host=${HOST} \
         --enable-libunwind"
 
-    [ $(check_finished strace) -eq 0 ] && cd strace && ./bootstrap && cd -
+    [ ! -e $BUILD_DIR/strace ] && cd strace && ./bootstrap && cd -
     do_build_with_configure strace "--prefix=$PREFIX --host=${HOST} \
         --enable-mpers=no"
 
-    [ $(check_finished file) -eq 0 ] && cd file && aclocal && autoheader && \
+    [ ! -e $BUILD_DIR/file ] && cd file && aclocal && autoheader && \
         libtoolize --force && automake --add-missing && autoconf
     do_build_with_configure file "--prefix=$PREFIX --host=${HOST} \
         LDFLAGS=$RPATH --enable-static --disable-shared"
