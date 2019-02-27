@@ -156,7 +156,20 @@ stage_trim()
 stage_pack()
 {
     pushd $PREFIX
-    tar --transform 's#^#embedded-devtools/#' -czvf embedded-devtools.tar.gz bin lib share/misc/magic.mgc
+    tar --transform 'flags=r;s#^#edt/#' -czvf edt-$HOST.tar.gz \
+        lib \
+        bin/elfedit \
+        bin/file \
+        bin/gdb* \
+        bin/nm \
+        bin/objdump \
+        bin/pprof* \
+        bin/readelf \
+        bin/strace \
+        bin/strings \
+        bin/strip \
+        bin/valgrind* \
+        bin/vgdb
     popd
 }
 
