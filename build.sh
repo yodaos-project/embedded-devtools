@@ -121,7 +121,7 @@ stage_trim()
     find lib -path $PREFIX/lib/valgrind -name '*.so*' -type f -exec $STRIP -s {} \;
 
     # Valgrind
-    find /tmp/devtools/lib/valgrind/ -perm 0755 ! -name '*memcheck*' ! -name '*core*' -exec rm -f {} \;
+    find $PREFIX/lib/valgrind/ -perm 0755 ! -name '*memcheck*' ! -name '*core*' -exec rm -f {} \;
 
     popd
 }
