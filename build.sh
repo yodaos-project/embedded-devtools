@@ -1,44 +1,29 @@
 #!/bin/bash
 
-SCRIPT_DIR=$(readlink -f $(dirname $0))
-BUILD_DIR=$SCRIPT_DIR/build
-PREFIX=_install
-HOST=arm-none-linux-gnueabi
-JOBS=1
-STAGE=build
-
-export STAGING_DIR=$BUILD_DIR/stage
-mkdir -p $STAGING_DIR
-
 usage()
 {
-    echo "Usage: $0 [-h arm-none-linux] [-p /usr/local/] [-b ./build] [-j 4] [-s build|trim|pack]" 1>&2
+    echo "Usage: $0 [-h arm-none-linux] [-p <PREFIX>] [-b <BUILD_DIR>] [-j 4] [-s build|trim|pack]" 1>&2
     exit 1
 }
 
 while getopts ":h:p:b:j:s:" o; do
     case "${o}" in
-        h)
-            HOST=$OPTARG
-            ;;
-        p)
-            PREFIX=$OPTARG
-            ;;
-        b)
-            BUILD=$OPTARG
-            ;;
-        j)
-            JOBS=$OPTARG
-            ;;
-        s)
-            STAGE=$OPTARG
-            ;;
-        *)
-            usage
-            ;;
+        h) HOST=$OPTARG ;;
+        p) PREFIX=$OPTARG ;;
+        b) BUILD_DIR=$OPTARG ;;
+        j) JOBS=$OPTARG ;;
+        s) STAGE=$OPTARG ;;
+        *) usage ;;
     esac
 done
 shift $((OPTIND-1))
+
+SCRIPT_DIR=$(readlink -f $(dirname $0))
+[ -z $HOST ] && HOST=arm-none-linux-gnueabi
+[ -z $PREFIX ] && PREFIX=$SCRIPT_DIR/_install/$HOST
+[ -z $BUILD_DIR ] && BUILD_DIR=$SCRIPT_DIR/build/$HOST
+[ -z $JOBS ] && JOBS=1
+[ -z $STAGE ] && STAGE=build
 
 export MAKE=make
 export CC=$HOST-gcc
