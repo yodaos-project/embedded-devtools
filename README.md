@@ -22,5 +22,9 @@ export AR=${CROSS_COMPILE}ar
 ```
 2. Run build.sh
 ```
-$ bash build.sh -h aarch64-linux-gnu -p /tmp/edt/ -j 32
+$ bash build.sh -h aarch64-linux-gnu -j 32
+```
+3. Check packed files
+```
+$ find _install -name '*edt-*.tar.gz'
 ```
