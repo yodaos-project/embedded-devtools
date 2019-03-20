@@ -118,10 +118,14 @@ stage_trim()
 
     # Strip
     find bin -mindepth 1 -type f -exec $STRIP -s {} \; 2>/dev/null
-    find lib -path $PREFIX/lib/valgrind -name '*.so*' -type f -exec $STRIP -s {} \;
+    find lib -path lib/valgrind -name '*.so*' -type f -exec $STRIP -s {} \;
 
     # Valgrind
-    find $PREFIX/lib/valgrind/ -perm 0755 ! -name '*memcheck*' ! -name '*core*' -exec rm -f {} \;
+    find lib/valgrind/ -perm 0755 \
+        ! -name '*core*' \
+        ! -name '*memcheck*' \
+        ! -name '*helgrind*' \
+        -exec rm -f {} \;
 
     popd
 }
@@ -130,13 +134,13 @@ stage_pack()
 {
     pushd $PREFIX
     tar --transform 'flags=r;s#^#edt/#' -czvf edt-$HOST.tar.gz \
+        share/misc/magic.mgc \
         lib \
         bin/elfedit \
         bin/file \
         bin/gdb* \
         bin/nm \
         bin/objdump \
-        bin/pprof* \
         bin/readelf \
         bin/strace \
         bin/strings \
