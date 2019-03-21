@@ -2,7 +2,12 @@
 
 usage()
 {
-    echo "Usage: $0 [-h arm-none-linux] [-p <PREFIX>] [-b <BUILD_DIR>] [-j 4] [-s build|trim|pack]" 1>&2
+    echo "Usage: $0 \
+        [-h arm-none-linux] \
+        [-p <PREFIX>] \
+        [-b <BUILD_DIR>] \
+        [-j 4] \
+        [-s build|trim|pack]" 1>&2
     exit 1
 }
 
@@ -22,7 +27,7 @@ SCRIPT_DIR=$(readlink -f $(dirname $0))
 [ -z $HOST ] && HOST=arm-none-linux-gnueabi
 [ -z $PREFIX ] && PREFIX=$SCRIPT_DIR/_install/$HOST
 [ -z $BUILD_DIR ] && BUILD_DIR=$SCRIPT_DIR/build/$HOST
-[ -z $JOBS ] && JOBS=1
+[ -z $JOBS ] && JOBS=4
 [ -z $STAGE ] && STAGE=build
 
 export MAKE=make
