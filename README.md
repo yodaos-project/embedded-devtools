@@ -13,12 +13,7 @@ EDT provide a bundle of develop tools run on embedded devices.
 
 1. Setup toolchains
 ```
-export CROSS_COMPILE=aarch64-linux-gnu-
-export CC=${CROSS_COMPILE}gcc
-export CPP=${CROSS_COMPILE}cpp
-export CXX=${CROSS_COMPILE}g++
-export LD=${CROSS_COMPILE}ld
-export AR=${CROSS_COMPILE}ar
+export PATH=/opt/gcc_aarch64-linux-gnu/bin/:$PATH
 ```
 2. Run build.sh
 ```
