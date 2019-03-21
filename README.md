@@ -8,6 +8,7 @@ EDT provide a bundle of develop tools run on embedded devices.
 - strace
 - gperftools
 - file
+- tcpdump
 
 ## Build
 

@@ -13,3 +13,9 @@
 [submodule "file"]
 	path = file
 	url = git://github.com/file/file
+[submodule "tcpdump"]
+	path = tcpdump
+	url = https://github.com/the-tcpdump-group/tcpdump
+[submodule "libpcap"]
+	path = libpcap
+	url = https://github.com/the-tcpdump-group/libpcap

@@ -37,6 +37,9 @@ export CPP=$HOST-cpp
 export AS=$HOST-as
 export LD=$HOST-ld
 export STRIP=$HOST-strip
+export C_INCLUDE_PATH=$PREFIX/include
+export CPLUS_INCLUDE_PATH=$PREFIX/include
+export LD_LIBRARY_PATH=$PREFIX/lib
 RPATH='-Wl,-rpath,$$\ORIGIN:$$\ORIGIN/../lib'
 
 do_build()
@@ -46,6 +49,27 @@ do_build()
     echo -e "\033[32m($(date '+%Y-%m-%d %H:%M:%S')): Finished $1\033[0m"
 }
 
+do_make()
+{
+    local make_dir=$1
+    local make_jobs=$2
+    local make_opts=$3
+
+    if [ -z "$make_opts" ]; then
+        $MAKE -C $make_dir -j$make_jobs
+    else
+        $MAKE -C $make_dir -j$make_jobs "$make_opts"
+    fi
+
+    if [ ! $? -eq 0 ]; then
+        rm -rf $make_dir
+        echo -e "\033[32m($(date '+%Y-%m-%d %H:%M:%S')): Failed to make $1\033[0m"
+    else
+        $MAKE -C $make_dir install
+        echo -e "\033[32m($(date '+%Y-%m-%d %H:%M:%S')): Success to make  $1\033[0m"
+    fi
+}
+
 do_build_with_configure()
 {
     local name=$1
@@ -53,22 +77,20 @@ do_build_with_configure()
     local make_opts=$3
     local build=$BUILD_DIR/$name
 
+    # Skip or start
     if [ -e $build ]; then
-        $MAKE -C $build install
         echo -e "\033[32m($(date '+%Y-%m-%d %H:%M:%S')): Skip $1\033[0m"
         return
     fi
-
     echo -e "\033[32m($(date '+%Y-%m-%d %H:%M:%S')): Start building $1\033[0m"
 
     # autogen & configure
     if [ ! -e $SCRIPT_DIR/$name/configure ]; then
         pushd $SCRIPT_DIR/$name && ./autogen.sh && popd
     fi
-
-    mkdir -p $build && pushd $build &&
-        $SCRIPT_DIR/$name/configure $config_opts && popd
-
+    mkdir -p $build && pushd $build
+    $SCRIPT_DIR/$name/configure $config_opts
+    popd
     if [ ! $? -eq 0 ]; then
         rm -rf $build
         echo -e "\033[32m($(date '+%Y-%m-%d %H:%M:%S')): Failed to configure $1\033[0m"
@@ -76,19 +98,35 @@ do_build_with_configure()
     fi
 
     # make
-    if [ -z "$make_opts" ]; then
-        $MAKE -C $build -j$JOBS
-    else
-        $MAKE -C $build "$make_opts" -j$JOBS
-    fi
+    do_make $build $JOBS "$make_opts"
+}
 
+do_build_with_cmake()
+{
+    local name=$1
+    local config_opts=$2
+    local make_opts=$3
+    local build=$BUILD_DIR/$name
+
+    # Skip or start
+    if [ -e $build ]; then
+        echo -e "\033[32m($(date '+%Y-%m-%d %H:%M:%S')): Skip $1\033[0m"
+        return
+    fi
+    echo -e "\033[32m($(date '+%Y-%m-%d %H:%M:%S')): Start building $1\033[0m"
+
+    # cmake
+    mkdir -p $build && pushd $build
+    cmake $SCRIPT_DIR/$name "$config_opts"
+    popd
     if [ ! $? -eq 0 ]; then
         rm -rf $build
-        echo -e "\033[32m($(date '+%Y-%m-%d %H:%M:%S')): Failed to make $1\033[0m"
-    else
-        $MAKE -C $build install
-        echo -e "\033[32m($(date '+%Y-%m-%d %H:%M:%S')): Finished $1\033[0m"
+        echo -e "\033[32m($(date '+%Y-%m-%d %H:%M:%S')): Failed to configure $1\033[0m"
+        return
     fi
+
+    # make
+    do_make $build $JOBS "$make_opts"
 }
 
 stage_build()
@@ -96,22 +134,35 @@ stage_build()
     git submodule init
     git submodule update
 
-    do_build_with_configure binutils-gdb "--prefix=$PREFIX --host=$HOST" \
+    # binutils & gdb
+    do_build_with_configure binutils-gdb \
+        "--prefix=$PREFIX --host=$HOST" \
         "CFLAGS=-g -O2 -DHAVE_FCNTL_H -DHAVE_LIMITS_H"
 
-    do_build_with_configure valgrind "--prefix=$PREFIX --host=${HOST/arm/armv7}"
+    # valgrind
+    do_build_with_configure valgrind \
+        "--prefix=$PREFIX --host=${HOST/arm/armv7}"
 
-    do_build_with_configure gperftools "--prefix=$PREFIX --host=${HOST} \
-        --enable-libunwind"
+    # gperftools
+    do_build_with_configure gperftools \
+        "--prefix=$PREFIX --host=${HOST} --enable-libunwind"
 
+    # strace
     [ ! -e $BUILD_DIR/strace ] && cd strace && ./bootstrap && cd -
-    do_build_with_configure strace "--prefix=$PREFIX --host=${HOST} \
-        --enable-mpers=no"
+    do_build_with_configure strace \
+        "--prefix=$PREFIX --host=${HOST} --enable-mpers=no"
 
+    # file
     [ ! -e $BUILD_DIR/file ] && cd file && aclocal && autoheader && \
         libtoolize --force && automake --add-missing && autoconf
-    do_build_with_configure file "--prefix=$PREFIX --host=${HOST} \
-        LDFLAGS=$RPATH --enable-static --disable-shared"
+    do_build_with_configure file \
+        "--prefix=$PREFIX --host=${HOST}" \
+        "LDFLAGS=$RPATH --enable-static --disable-shared"
+
+    # tcpdump
+    do_build_with_configure libpcap \
+        "--prefix=$PREFIX --host=${HOST} --with-pcap=linux"
+    do_build_with_cmake tcpdump "-DCMAKE_INSTALL_PREFIX=$PREFIX"
 }
 
 stage_trim()
@@ -151,7 +202,8 @@ stage_pack()
         bin/strings \
         bin/strip \
         bin/valgrind* \
-        bin/vgdb
+        bin/vgdb \
+        sbin/tcpdump
     popd
 }
 
