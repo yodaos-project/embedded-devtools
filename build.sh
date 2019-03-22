@@ -18,6 +18,7 @@ while getopts ":h:p:b:j:s:" o; do
         b) BUILD_DIR=$OPTARG ;;
         j) JOBS=$OPTARG ;;
         s) STAGE=$OPTARG ;;
+        V) VERSION=$OPTARG ;;
         *) usage ;;
     esac
 done
@@ -29,6 +30,7 @@ SCRIPT_DIR=$(readlink -f $(dirname $0))
 [ -z $BUILD_DIR ] && BUILD_DIR=$SCRIPT_DIR/build/$HOST
 [ -z $JOBS ] && JOBS=4
 [ -z $STAGE ] && STAGE=build
+[ -z $VERSION ] && VERSION=`git tag |tail -n1`
 
 export MAKE=make
 export CC=$HOST-gcc
@@ -189,7 +191,7 @@ stage_trim()
 stage_pack()
 {
     pushd $PREFIX
-    tar --transform 'flags=r;s#^#edt/#' -czvf edt-$HOST.tar.gz \
+    tar --transform 'flags=r;s#^#edt/#' -czvf edt-$HOST-$VERSION.tar.gz \
         share/misc/magic.mgc \
         lib \
         bin/elfedit \
