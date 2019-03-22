@@ -161,7 +161,7 @@ stage_build()
 
     # tcpdump
     do_build_with_configure libpcap \
-        "--prefix=$PREFIX --host=${HOST} --with-pcap=linux"
+        "--prefix=$PREFIX --host=${HOST} --with-pcap=linux --enable-shared=no"
     do_build_with_cmake tcpdump "-DCMAKE_INSTALL_PREFIX=$PREFIX"
 }
 
