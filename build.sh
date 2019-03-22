@@ -171,9 +171,6 @@ stage_trim()
 {
     pushd $PREFIX
 
-    # Delete
-    find lib \( -name '*.a' -or -name '*.la' \) -exec rm -f {} \;
-
     # Strip
     find bin -mindepth 1 -type f -exec $STRIP -s {} \; 2>/dev/null
     find lib -path lib/valgrind -name '*.so*' -type f -exec $STRIP -s {} \;
@@ -193,7 +190,7 @@ stage_pack()
     pushd $PREFIX
     tar --transform 'flags=r;s#^#edt/#' -czvf edt-$HOST-$VERSION.tar.gz \
         share/misc/magic.mgc \
-        lib \
+        lib/*.so* \
         bin/elfedit \
         bin/file \
         bin/gdb* \
