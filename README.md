@@ -3,11 +3,10 @@
 EDT provide a bundle of develop tools run on embedded devices.
 
 - binutils
+- strace
 - gdb
 - valgrind
-- strace
 - gperftools
-- file
 - tcpdump
 
 ## Build

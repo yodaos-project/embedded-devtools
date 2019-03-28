@@ -154,13 +154,6 @@ stage_build()
     do_build_with_configure strace \
         "--prefix=$PREFIX --host=${HOST} --enable-mpers=no"
 
-    # file
-    [ ! -e $BUILD_DIR/file ] && cd file && aclocal && autoheader && \
-        libtoolize --force && automake --add-missing && autoconf
-    do_build_with_configure file \
-        "--prefix=$PREFIX --host=${HOST}" \
-        "LDFLAGS=$RPATH --enable-static --disable-shared"
-
     # tcpdump
     do_build_with_configure libpcap \
         "--prefix=$PREFIX --host=${HOST} --with-pcap=linux --enable-shared=no"
@@ -190,12 +183,10 @@ stage_pack()
 {
     pushd $PREFIX
     tar --transform 'flags=r;s#^#edt/#' -czvf edt-$HOST-$VERSION.tar.gz \
-        share/misc/magic.mgc \
         lib/*.so* \
         lib/valgrind/*.so \
         lib/valgrind/*-*-linux \
         bin/elfedit \
-        bin/file \
         bin/gdb* \
         bin/nm \
         bin/objdump \
