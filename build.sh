@@ -179,6 +179,7 @@ stage_trim()
     find lib/valgrind/ -perm 0755 \
         ! -name '*core*' \
         ! -name '*memcheck*' \
+        ! -name '*massif*' \
         ! -name '*helgrind*' \
         -exec rm -f {} \;
 
@@ -191,6 +192,8 @@ stage_pack()
     tar --transform 'flags=r;s#^#edt/#' -czvf edt-$HOST-$VERSION.tar.gz \
         share/misc/magic.mgc \
         lib/*.so* \
+        lib/valgrind/*.so \
+        lib/valgrind/*-*-linux \
         bin/elfedit \
         bin/file \
         bin/gdb* \
