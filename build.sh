@@ -140,6 +140,10 @@ stage_build()
     do_build_with_cmake zlib "-DCMAKE_INSTALL_PREFIX=$PREFIX"
     rm -f $PREFIX/lib/libz.so*
 
+    # libunwind
+    do_build_with_configure libunwind \
+        "--prefix=$PREFIX --host=${HOST} --enable-shared=no"
+
     # binutils & gdb
     do_build_with_configure binutils-gdb \
         "--prefix=$PREFIX --host=$HOST" \
