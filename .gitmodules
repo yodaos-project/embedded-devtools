@@ -16,3 +16,6 @@
 [submodule "libpcap"]
 	path = libpcap
 	url = https://github.com/the-tcpdump-group/libpcap
+[submodule "zlib"]
+	path = zlib
+	url = https://github.com/madler/zlib
