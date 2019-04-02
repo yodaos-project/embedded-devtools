@@ -65,7 +65,8 @@ do_make()
 
     if [ ! $? -eq 0 ]; then
         rm -rf $make_dir
-        echo -e "\033[32m($(date '+%Y-%m-%d %H:%M:%S')): Failed to make $1\033[0m"
+        echo -e "\033[31m($(date '+%Y-%m-%d %H:%M:%S')): Failed to make $1\033[0m"
+        exit 1
     fi
 
     if [[ ! $make_opts =~ 'install' ]]; then
@@ -97,8 +98,8 @@ do_build_with_configure()
     popd
     if [ ! $? -eq 0 ]; then
         rm -rf $build
-        echo -e "\033[32m($(date '+%Y-%m-%d %H:%M:%S')): Failed to configure $1\033[0m"
-        return
+        echo -e "\033[31m($(date '+%Y-%m-%d %H:%M:%S')): Failed to configure $1\033[0m"
+        exit 1
     fi
 
     # make
@@ -125,8 +126,8 @@ do_build_with_cmake()
     popd
     if [ ! $? -eq 0 ]; then
         rm -rf $build
-        echo -e "\033[32m($(date '+%Y-%m-%d %H:%M:%S')): Failed to configure $1\033[0m"
-        return
+        echo -e "\033[31m($(date '+%Y-%m-%d %H:%M:%S')): Failed to configure $1\033[0m"
+        exit 1
     fi
 
     # make
