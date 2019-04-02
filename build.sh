@@ -66,10 +66,12 @@ do_make()
     if [ ! $? -eq 0 ]; then
         rm -rf $make_dir
         echo -e "\033[32m($(date '+%Y-%m-%d %H:%M:%S')): Failed to make $1\033[0m"
-    else
-        $MAKE -C $make_dir install
-        echo -e "\033[32m($(date '+%Y-%m-%d %H:%M:%S')): Success to make  $1\033[0m"
     fi
+
+    if [[ ! $make_opts =~ 'install' ]]; then
+        $MAKE -C $make_dir install
+    fi
+    echo -e "\033[32m($(date '+%Y-%m-%d %H:%M:%S')): Success to make  $1\033[0m"
 }
 
 do_build_with_configure()
@@ -155,7 +157,9 @@ stage_build()
 
     # gperftools
     do_build_with_configure gperftools \
-        "--prefix=$PREFIX --host=${HOST} --enable-libunwind"
+        "--prefix=$PREFIX --host=${HOST} --enable-libunwind \
+        --disable-static --disable-debugalloc" \
+        "install-libLTLIBRARIES"
 
     # strace
     [ ! -e $BUILD_DIR/strace ] && cd strace && ./bootstrap && cd -
