@@ -122,7 +122,7 @@ do_build_with_cmake()
 
     # cmake
     mkdir -p $build && pushd $build
-    cmake $SCRIPT_DIR/$name "$config_opts"
+    cmake $SCRIPT_DIR/$name $config_opts
     popd
     if [ ! $? -eq 0 ]; then
         rm -rf $build
@@ -152,6 +152,11 @@ stage_build()
         "--prefix=$PREFIX --host=$HOST" \
         "CFLAGS=-g -O2 -DHAVE_FCNTL_H -DHAVE_LIMITS_H"
 
+    # strace
+    [ ! -e $BUILD_DIR/strace ] && cd strace && ./bootstrap && cd -
+    do_build_with_configure strace \
+        "--prefix=$PREFIX --host=${HOST} --enable-mpers=no"
+
     # valgrind
     do_build_with_configure valgrind \
         "--prefix=$PREFIX --host=${HOST/arm/armv7}"
@@ -162,10 +167,29 @@ stage_build()
         --disable-static --disable-debugalloc" \
         "install-libLTLIBRARIES"
 
-    # strace
-    [ ! -e $BUILD_DIR/strace ] && cd strace && ./bootstrap && cd -
-    do_build_with_configure strace \
-        "--prefix=$PREFIX --host=${HOST} --enable-mpers=no"
+    # heaptrack
+    pushd boost
+    echo "using gcc : arm : aarch64-linux-gnu-g++ ;" > boost/user-config.jam
+    ./bootstrap.sh --prefix=$PREFIX
+    ./b2 install -a -q \
+        --disable-icu \
+        --with-system \
+        --with-filesystem \
+        --with-iostreams \
+        --user-config=user-config.jam \
+        -s NO_ZLIB=0 \
+        -s NO_COMPRESSION=0 \
+        -s ZLIB_INCLUDE=$PREFIX/include \
+        -s ZLIB_LIBPATH=$PREFIX/lib \
+        -s ZLIB_BINARY=z \
+        -j $JOBS \
+        abi=aapcs address-model=64 architecture=arm \
+        binary-format=elf threading=multi toolset=gcc-arm
+    rm -rf $PREFIX/lib/libboost_*
+    popd
+    do_build_with_cmake heaptrack \
+        "-DCMAKE_INSTALL_PREFIX=$PREFIX -DHEAPTRACK_BUILD_PRINT=off \
+        -DHEAPTRACK_BUILD_GUI=off -DHEAPTRACK_BUILD_TRACK=on"
 
     # tcpdump
     do_build_with_configure libpcap \
@@ -185,8 +209,6 @@ stage_trim()
     find lib/valgrind/ -perm 0755 \
         ! -name '*core*' \
         ! -name '*memcheck*' \
-        ! -name '*massif*' \
-        ! -name '*helgrind*' \
         -exec rm -f {} \;
 
     popd
@@ -199,16 +221,17 @@ stage_pack()
         lib/*.so* \
         lib/valgrind/*.so \
         lib/valgrind/*-*-linux \
-        bin/elfedit \
-        bin/gdb* \
+        lib/heaptrack \
         bin/nm \
         bin/objdump \
         bin/readelf \
-        bin/strace \
-        bin/strings \
         bin/strip \
+        bin/strings \
+        bin/gdb* \
+        bin/strace \
         bin/valgrind* \
         bin/vgdb \
+        bin/heaptrack \
         sbin/tcpdump
     popd
 }

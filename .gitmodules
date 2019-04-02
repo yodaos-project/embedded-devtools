@@ -22,3 +22,9 @@
 [submodule "libunwind"]
 	path = libunwind
 	url = https://github.com/libunwind/libunwind
+[submodule "boost"]
+	path = boost
+	url = https://github.com/boostorg/boost
+[submodule "heaptrack"]
+	path = heaptrack
+	url = https://github.com/KDE/heaptrack
