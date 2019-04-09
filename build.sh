@@ -157,6 +157,9 @@ stage_build()
     do_build_with_configure strace \
         "--prefix=$PREFIX --host=${HOST} --enable-mpers=no"
 
+    # ltrace
+    do_build_with_configure ltrace "--prefix=$PREFIX --host=${HOST}"
+
     # valgrind
     do_build_with_configure valgrind \
         "--prefix=$PREFIX --host=${HOST/arm/armv7}"
@@ -229,6 +232,7 @@ stage_pack()
         bin/strings \
         bin/gdb* \
         bin/strace \
+        bin/ltrace \
         bin/valgrind* \
         bin/vgdb \
         bin/heaptrack \

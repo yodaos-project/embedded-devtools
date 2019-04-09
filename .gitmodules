@@ -28,3 +28,6 @@
 [submodule "heaptrack"]
 	path = heaptrack
 	url = https://github.com/KDE/heaptrack
+[submodule "ltrace"]
+	path = ltrace
+	url = https://github.com/dkogan/ltrace
