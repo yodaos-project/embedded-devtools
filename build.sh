@@ -221,7 +221,9 @@ stage_pack()
 {
     pushd $PREFIX
     tar --transform 'flags=r;s#^#edt/#' -czvf edt-$HOST-$VERSION.tar.gz \
-        lib/*.so* \
+        lib/libelf*.so* \
+        lib/libtcmalloc.so* \
+        lib/libprofiler.so* \
         lib/valgrind/*.so \
         lib/valgrind/*-*-linux \
         lib/heaptrack \
@@ -233,7 +235,7 @@ stage_pack()
         bin/gdb* \
         bin/strace \
         bin/ltrace \
-        bin/valgrind* \
+        bin/valgrind \
         bin/vgdb \
         bin/heaptrack \
         sbin/tcpdump
