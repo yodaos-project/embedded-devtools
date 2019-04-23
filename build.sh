@@ -156,6 +156,12 @@ stage_build()
     do_build_with_cmake zlib "-DCMAKE_INSTALL_PREFIX=$PREFIX"
     rm -f $PREFIX/lib/libz.so*
 
+    # elfutils
+    pushd elfutils && autoreconf -i -f && automake --add-missing && popd
+    do_patch elfutils
+    do_build_with_configure elfutils "--prefix=$PREFIX --host=${HOST} \
+        --enable-maintainer-mode --disable-textrelcheck"
+
     # libunwind
     do_build_with_configure libunwind \
         "--prefix=$PREFIX --host=${HOST} --enable-shared=yes"

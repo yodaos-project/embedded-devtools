@@ -31,3 +31,6 @@
 [submodule "ltrace"]
 	path = ltrace
 	url = https://github.com/dkogan/ltrace
+[submodule "elfutils"]
+	path = elfutils
+	url = git://sourceware.org/git/elfutils.git
