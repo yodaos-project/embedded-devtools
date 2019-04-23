@@ -135,6 +135,18 @@ do_build_with_cmake()
     do_make $build $JOBS "$make_opts"
 }
 
+do_patch()
+{
+    local name=$1
+
+    pushd $SCRIPT_DIR/$name
+    git reset --hard HEAD
+    for item in $(ls $SCRIPT_DIR/patchs/$name); do
+        git apply $SCRIPT_DIR/patchs/$name/$item
+    done
+    popd
+}
+
 stage_build()
 {
     git submodule init
@@ -149,6 +161,7 @@ stage_build()
         "--prefix=$PREFIX --host=${HOST} --enable-shared=yes"
 
     # binutils & gdb
+    do_patch binutils-gdb
     do_build_with_configure binutils-gdb \
         "--prefix=$PREFIX --host=$HOST" \
         "CFLAGS=-g -O2 -DHAVE_FCNTL_H -DHAVE_LIMITS_H"
