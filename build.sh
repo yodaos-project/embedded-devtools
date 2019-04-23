@@ -43,6 +43,7 @@ export C_INCLUDE_PATH=$PREFIX/include
 export CPLUS_INCLUDE_PATH=$PREFIX/include
 export LD_LIBRARY_PATH=$PREFIX/lib
 RPATH='-Wl,-rpath,$$\ORIGIN:$$\ORIGIN/../lib'
+echo "CPPFLAGS=-I$PREFIX/include LDFLAGS=-L$PREFIX/lib" > $PREFIX/share/config.site
 
 do_build()
 {
@@ -145,7 +146,7 @@ stage_build()
 
     # libunwind
     do_build_with_configure libunwind \
-        "--prefix=$PREFIX --host=${HOST} --enable-shared=no"
+        "--prefix=$PREFIX --host=${HOST} --enable-shared=yes"
 
     # binutils & gdb
     do_build_with_configure binutils-gdb \
@@ -222,6 +223,7 @@ stage_pack()
     pushd $PREFIX
     tar --transform 'flags=r;s#^#edt/#' -czvf edt-$HOST-$VERSION.tar.gz \
         lib/libelf*.so* \
+        lib/libunwind.so* \
         lib/libtcmalloc.so* \
         lib/libprofiler.so* \
         lib/valgrind/*.so \
