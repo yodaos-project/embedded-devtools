@@ -172,6 +172,10 @@ stage_build()
         "--prefix=$PREFIX --host=$HOST" \
         "CFLAGS=-g -O2 -DHAVE_FCNTL_H -DHAVE_LIMITS_H"
 
+    # systemtap
+    do_build_with_configure systemtap "--prefix=$PREFIX --host=${HOST} --without-avahi"
+    exit
+
     # strace
     [ ! -e $BUILD_DIR/strace ] && cd strace && ./bootstrap && cd -
     do_build_with_configure strace \
@@ -241,6 +245,7 @@ stage_pack()
 {
     pushd $PREFIX
     tar --transform 'flags=r;s#^#edt/#' -czvf edt-$HOST-$VERSION.tar.gz \
+        lib/libdw*.so* \
         lib/libelf*.so* \
         lib/libunwind.so* \
         lib/libtcmalloc.so* \
@@ -254,6 +259,8 @@ stage_pack()
         bin/strip \
         bin/strings \
         bin/gdb* \
+        bin/dtrace\
+        bin/stap* \
         bin/strace \
         bin/ltrace \
         bin/valgrind \

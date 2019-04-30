@@ -34,3 +34,6 @@
 [submodule "elfutils"]
 	path = elfutils
 	url = git://sourceware.org/git/elfutils.git
+[submodule "systemtap"]
+	path = systemtap
+	url = git://sourceware.org/git/systemtap.git
