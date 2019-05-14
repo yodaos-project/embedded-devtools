@@ -245,6 +245,7 @@ stage_trim()
 stage_pack()
 {
     pushd $PREFIX
+    find lib/ -maxdepth 1 -name '*.so*' -type f -exec chrpath -r '$ORIGIN/../lib' {} \;
     tar --transform 'flags=r;s#^#edt/#' -czvf edt-$HOST-$VERSION.tar.gz \
         lib/libdw*.so* \
         lib/libelf*.so* \
