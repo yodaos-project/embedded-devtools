@@ -236,6 +236,7 @@ stage_trim()
     find lib/valgrind/ -perm 0755 \
         ! -name '*core*' \
         ! -name '*memcheck*' \
+        ! -name '*.a' \
         -exec rm -f {} \;
 
     popd
@@ -252,6 +253,7 @@ stage_pack()
         lib/libprofiler.so* \
         lib/valgrind/*.so \
         lib/valgrind/*-*-linux \
+        lib/valgrind/*.xml \
         lib/heaptrack \
         bin/nm \
         bin/objdump \
