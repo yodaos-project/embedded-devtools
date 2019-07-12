@@ -2,12 +2,12 @@
 
 usage()
 {
-    echo "Usage: $0 \
-        [-h arm-none-linux] \
-        [-p <PREFIX>] \
-        [-b <BUILD_DIR>] \
-        [-j 4] \
-        [-s build|trim|pack]" 1>&2
+    echo "Usage: $0" \
+        "[-h arm-none-linux]" \
+        "[-p <PREFIX>]" \
+        "[-b <BUILD_DIR>]" \
+        "[-j 4]" \
+        "[-s build|trim|pack]" 1>&2
     exit 1
 }
 
@@ -43,6 +43,7 @@ export C_INCLUDE_PATH=$PREFIX/include
 export CPLUS_INCLUDE_PATH=$PREFIX/include
 export LD_LIBRARY_PATH=$PREFIX/lib
 RPATH='-Wl,-rpath,$$\ORIGIN:$$\ORIGIN/../lib'
+mkdir -p $PREFIX/share/
 echo "CPPFLAGS=-I$PREFIX/include LDFLAGS=-L$PREFIX/lib" > $PREFIX/share/config.site
 
 do_build()
@@ -174,7 +175,6 @@ stage_build()
 
     # systemtap
     do_build_with_configure systemtap "--prefix=$PREFIX --host=${HOST} --without-avahi"
-    exit
 
     # strace
     [ ! -e $BUILD_DIR/strace ] && cd strace && ./bootstrap && cd -
